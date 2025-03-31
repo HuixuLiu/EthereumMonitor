@@ -2,12 +2,14 @@ package com.tum.bank;
 
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
@@ -16,10 +18,22 @@ import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 
 public class App {
-
-
+   
+    private static final String ETHERSCAN_API_KEY = "CFH3XBEEIX8F36CBR2HPT6SWWBN8TDRID6";
+    private static final String ETH_ADDRESS = "0xc280b28bE8592e3d8806E9dddE8e3E59F7Db3a4c";
+    private static final OkHttpClient client = new OkHttpClient();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+ 
+     
     public static void main(String[] args) throws Exception {
     //using infura.io api (for node connecting)and web3j to fetch the balance of an address
        final Web3j client = Web3j.build(
@@ -38,8 +52,7 @@ public class App {
     final BigInteger unscaledbalance = balanceResponse.getBalance();
     final BigDecimal scaledbalance = new BigDecimal(unscaledbalance)
     .divide(new BigDecimal(1000000000000000000L),18,RoundingMode.HALF_UP);
-    System.out.print(unscaledbalance);
-    System.out.print(scaledbalance);
+
     
 
      try {
@@ -71,6 +84,74 @@ public class App {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+    CompletableFuture.runAsync(() -> {
+            try {
+                fetchAndPrintTransactions();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).join();
+
     }
+
+   public static void fetchAndPrintTransactions() throws IOException {
+        String url = String.format(
+                "https://api.etherscan.io/api?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&page=1&offset=100&sort=asc&apikey=%s",
+                ETH_ADDRESS, ETHERSCAN_API_KEY
+        );
+
+        Request request = new Request.Builder().url(url).get().build();
+        Response response = client.newCall(request).execute();
+
+        if (!response.isSuccessful()) {
+            System.out.println("Error fetching transactions: " + response.message());
+            return;
+        }
+
+        JsonNode rootNode = objectMapper.readTree(response.body().string());
+        JsonNode transactions = rootNode.path("result");
+
+        if (!transactions.isArray() || transactions.isEmpty()) {
+            System.out.println("No transactions found.");
+            return;
+        }
+
+        printTransactionTable(transactions);
+    }
+
+    private static void printTransactionTable(JsonNode transactions) {
+        // print the head
+                System.out.printf("%-15s %-15s %-15s %-20s %-20s %-15s%n",
+                "BlockNumber", "TxHash", "From", "To", "Value (ETH)", "GasUsed");
+        System.out.println("--------------------------------------------------------------------------------------------------------------------");
+
+        // iterate the transaction history
+        for (JsonNode tx : transactions) {
+            String blockNumber = tx.get("blockNumber").asText();
+            String hash = tx.get("hash").asText().substring(0, 10) + "..."; // 截取部分哈希值
+            String from = tx.get("from").asText().substring(0, 10) + "...";
+            String to = tx.get("to").asText().substring(0, 10) + "...";
+            String value = String.format("%.6f", Double.parseDouble(tx.get("value").asText()) / 1e18); // 以 ETH 计算
+            String gasUsed = tx.get("gasUsed").asText();
+
+            System.out.printf("%-15s %-15s %-15s %-20s %-20s %-15s%n",
+                    blockNumber, hash, from, to, value, gasUsed);
+        }
+    }
+
+    //fetch the transaction history
+
+//   this is the url to call the transaction history    
+//     https://api.etherscan.io/api
+//    ?module=account
+//    &action=txlist
+//    &address=0xc280b28bE8592e3d8806E9dddE8e3E59F7Db3a4c
+//    &startblock=0
+//    &endblock=99999999
+//    &page=1
+//    &offset=100
+//    &sort=asc
+//    &apikey=CFH3XBEEIX8F36CBR2HPT6SWWBN8TDRID6
     
-}
+    }
