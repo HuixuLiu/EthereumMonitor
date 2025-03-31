@@ -41,10 +41,10 @@ public class App {
         "https://mainnet.infura.io/v3/311c3aa96c084ba8963626960fd1b92b"
        )
     );
-    final String ethAddress ="0xc280b28bE8592e3d8806E9dddE8e3E59F7Db3a4c";
+    
     final EthGetBalance balanceResponse =
     
-     client.ethGetBalance(ethAddress,DefaultBlockParameter
+     client.ethGetBalance(ETH_ADDRESS,DefaultBlockParameter
      .valueOf("latest")).sendAsync()
      .get(10,TimeUnit.SECONDS);
 
@@ -54,9 +54,8 @@ public class App {
     .divide(new BigDecimal(1000000000000000000L),18,RoundingMode.HALF_UP);
 
     
-
+//fetch the token(ETH) price from Binance API 
      try {
-            //fetch the token(ETH) price from Binance API 
             // 1. send GET request
             String url = "https://www.binance.com/api/v3/ticker/price?symbol=ETHUSDT";
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
@@ -120,24 +119,28 @@ public class App {
         printTransactionTable(transactions);
     }
 
-    private static void printTransactionTable(JsonNode transactions) {
-        // print the head
-                System.out.printf("%-15s %-15s %-15s %-20s %-20s %-15s%n",
-                "BlockNumber", "TxHash", "From", "To", "Value (ETH)", "GasUsed");
-        System.out.println("--------------------------------------------------------------------------------------------------------------------");
+private static void printTransactionTable(JsonNode transactions) {
+    // print the header
+    System.out.printf("%-5s %-15s %-15s %-15s %-20s %-20s %-15s%n",
+            "ID", "BlockNumber", "TxHash", "From", "To", "Value (ETH)", "GasUsed");
+    System.out.println("--------------------------------------------------------------------------------------------------------------------");
 
-        // iterate the transaction history
-        for (JsonNode tx : transactions) {
-            String blockNumber = tx.get("blockNumber").asText();
-            String hash = tx.get("hash").asText().substring(0, 10) + "..."; // 截取部分哈希值
-            String from = tx.get("from").asText().substring(0, 10) + "...";
-            String to = tx.get("to").asText().substring(0, 10) + "...";
-            String value = String.format("%.6f", Double.parseDouble(tx.get("value").asText()) / 1e18); // 以 ETH 计算
-            String gasUsed = tx.get("gasUsed").asText();
+    // iterate the transaction history
+    int transactionId = 1; 
+    for (JsonNode tx : transactions) {
+        String blockNumber = tx.get("blockNumber").asText();
+        String hash = tx.get("hash").asText().substring(0, 10) + "...";
+        String from = tx.get("from").asText().substring(0, 10) + "...";
+        String to = tx.get("to").asText().substring(0, 10) + "...";
+        String value = String.format("%.6f", Double.parseDouble(tx.get("value").asText()) / 1e18); 
+        String gasUsed = tx.get("gasUsed").asText();
 
-            System.out.printf("%-15s %-15s %-15s %-20s %-20s %-15s%n",
-                    blockNumber, hash, from, to, value, gasUsed);
-        }
+        System.out.printf("%-5d %-15s %-15s %-15s %-20s %-20s %-15s%n",
+                transactionId, blockNumber, hash, from, to, value, gasUsed);
+        
+        transactionId++; 
+    }
+}
     }
 
     //fetch the transaction history
@@ -154,4 +157,4 @@ public class App {
 //    &sort=asc
 //    &apikey=CFH3XBEEIX8F36CBR2HPT6SWWBN8TDRID6
     
-    }
+
