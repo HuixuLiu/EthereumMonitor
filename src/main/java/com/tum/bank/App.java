@@ -19,10 +19,9 @@ import org.web3j.protocol.http.HttpService;
 
 public class App {
 
-// private static final String BINANCE_API = "https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT";
 
     public static void main(String[] args) throws Exception {
-
+    //using infura.io api (for node connecting)and web3j to fetch the balance of an address
        final Web3j client = Web3j.build(
         new HttpService(
         "https://mainnet.infura.io/v3/311c3aa96c084ba8963626960fd1b92b"
@@ -44,6 +43,7 @@ public class App {
     
 
      try {
+            //fetch the token(ETH) price from Binance API 
             // 1. send GET request
             String url = "https://www.binance.com/api/v3/ticker/price?symbol=ETHUSDT";
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
@@ -71,8 +71,6 @@ public class App {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-       
-
     }
+    
 }

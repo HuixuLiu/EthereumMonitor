@@ -1,11 +1,10 @@
 # EthereumMonitor
 
 
-This is a Java program that monitors a blockchain address on Ethereum,retrieve the balance from the target account.
+This is a Java program that monitors a blockchain address on Ethereum,retrieve the balance from the target account and show the assert in USDT.
 
 to be developed: fetches historical transactions, and computes some basic statistics, e.g., how many swaps
 have been performed, the overall transaction volume in USD of that address, …
-The program should be able to calculate the account balance of all assets in USD.
 
 to use it, clone to  the local repo and go to the directory "EthereumMonitor/"
 
